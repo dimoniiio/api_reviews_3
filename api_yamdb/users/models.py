@@ -18,6 +18,7 @@ class MyUser(AbstractUser):
         default='user'
     )
     bio = models.TextField('Биография', blank=True)
+    confirmation_code = models.TextField('Код подтверждения')
 
     class Meta:
         verbose_name = 'Пользователь'
