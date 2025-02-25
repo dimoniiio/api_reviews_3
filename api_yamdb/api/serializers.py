@@ -6,7 +6,7 @@ from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
 from reviews.models import Title, Category, Genre, Comment, Review
-
+from django.db.models import Avg
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -31,11 +31,7 @@ class TitleSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
         slug_field='name'
     )
-    rating = serializers.IntegerField(
-        required=False,
-        read_only=True,
-        default=None
-    )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
@@ -49,6 +45,13 @@ class TitleSerializer(serializers.ModelSerializer):
                 'Год выпуска не может быть больше текущего года.'
             )
         return value
+
+    def get_rating(self, obj):
+        reviews = Review.objects.filter(title=obj)
+        if reviews.exists():
+            average_score = reviews.aggregate(Avg('score'))['score__avg']
+            return round(average_score, 1)
+        return None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
