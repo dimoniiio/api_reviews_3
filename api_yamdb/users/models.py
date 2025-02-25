@@ -4,6 +4,7 @@ from django.db import models
 
 class MyUser(AbstractUser):
     """Класс описывающий пользователя."""
+
     ROLE_CHOICES = [
         ('anon', 'Аноним'),
         ('admin', 'Администратор'),
