@@ -1,14 +1,18 @@
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import User
-from .serializers import (SignUpSerializer, TokenObtainSerializer,
-                          UserMeSerializer)
+from .permissions import IsReadOnlyOrAdmin
+from .serializers import (CategorySerializer, GenreSerializer,
+                          SignUpSerializer, TitleSerializer,
+                          TokenObtainSerializer, UserMeSerializer)
+from .viewsets import CreateListDeleteViewSet
+from reviews.models import Category, Genre, Title, User
 
 
 class AuthViewSet(viewsets.ViewSet):
@@ -71,20 +75,6 @@ class AuthViewSet(viewsets.ViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-from rest_framework import viewsets
-from rest_framework import filters, viewsets
-from rest_framework.pagination import (
-    PageNumberPagination,
-)
-
-from reviews.models import Title, Category, Genre
-from .serializers import (
-    CategorySerializer,
-    GenreSerializer,
-    TitleSerializer,
-)
-from .viewsets import CreateListDeleteViewSet
-from .permissions import IsReadOnlyOrAdmin
 
 
 class CategoryViewSet(CreateListDeleteViewSet):
