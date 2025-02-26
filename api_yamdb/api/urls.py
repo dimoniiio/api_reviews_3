@@ -1,15 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
-    TitleViewSet,
-    GenreViewSet,
-    CategoryViewSet
-)
+from .views import AuthViewSet, CategoryViewSet, GenreViewSet, TitleViewSet
 
 app_name = 'api'
 
 v1_router = DefaultRouter()
+v1_router.register('auth', AuthViewSet, basename='auth')
 v1_router.register('titles', TitleViewSet, basename='titles')
 v1_router.register('categories', CategoryViewSet, basename='categories')
 v1_router.register('genres', GenreViewSet, basename='genres')
