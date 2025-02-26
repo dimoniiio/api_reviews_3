@@ -235,7 +235,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Метод получения всех комметариев к отзыву."""
-        return self.commented_review.reviews.all()
+        return self.commented_review.comments.all()
 
     def perform_create(self, serializer):
         """Метод переопределения автора и произведения у отзыва."""
