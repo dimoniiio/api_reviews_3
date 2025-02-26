@@ -9,6 +9,7 @@ from reviews.models import Title, Category, Genre
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    """Сериализатор для жанров."""
 
     class Meta:
         model = Genre
@@ -16,6 +17,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Сериализатор для категорий."""
 
     class Meta:
         model = Category
@@ -23,6 +25,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
+    """Сериализатор для произведений."""
+
     genre = SlugRelatedField(
         queryset=Genre.objects.all(),
         slug_field='name', many=True

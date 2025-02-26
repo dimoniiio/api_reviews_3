@@ -15,6 +15,8 @@ from .permissions import IsReadOnlyOrAdmin
 
 
 class CategoryViewSet(CreateListDeleteViewSet):
+    """Вьюсет для просмотра категорий."""
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
@@ -24,6 +26,8 @@ class CategoryViewSet(CreateListDeleteViewSet):
 
 
 class GenreViewSet(CreateListDeleteViewSet):
+    """Вьюсет для просмотра жанров."""
+
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = PageNumberPagination
@@ -31,6 +35,8 @@ class GenreViewSet(CreateListDeleteViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """Вьюсет для просмотра произведений."""
+
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
