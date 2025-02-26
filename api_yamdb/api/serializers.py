@@ -6,9 +6,8 @@ from django.conf import settings
 from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
 
-from reviews.models import Category, Genre, Review, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -101,7 +100,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    """Сериалайзер отчёта"""
+    """Сериализатор отчёта."""
 
     author = SlugRelatedField(read_only=True, slug_field='username')
 
@@ -129,9 +128,19 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate_text(self, value):
         """Метод валидации текста отзыва."""
-        if len(value) > settings.MAX_TEXT_LENGTH:
+        if len(value) > settings.MAX_REVIEW_LENGTH:
             return value
         raise serializers.ValidationError(
             'Максимальное количество символов в отзыве: '
-            f'{settings.MAX_TEXT_LENGTH}.'
+            f'{settings.MAX_REVIEW_LENGTH}.'
         )
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор комментария."""
+
+    author = SlugRelatedField(read_only=True, slug_field='username')
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'text', 'author', 'pub_date')

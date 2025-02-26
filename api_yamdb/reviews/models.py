@@ -48,13 +48,13 @@ class Genre(models.Model):
 class Review(models.Model):
     """Класс модели отзыва."""
 
-    text = models.TextField('Текст', max_length=settings.MAX_TEXT_LENGTH)
+    text = models.TextField('Текст', max_length=settings.MAX_REVIEW_LENGTH)
     author = models.ForeignKey(
         User, verbose_name='Автор публикации',
         on_delete=models.CASCADE, related_name='reviews'
     )
     title = models.ForeignKey(
-        'Произведение', Title, 
+        Title, verbose_name='Произведение',
         on_delete=models.SET_NULL, related_name='reviews'
     )
     score = models.IntegerField(
@@ -76,6 +76,31 @@ class Review(models.Model):
             models.UniqueConstraint(
                 fields=('author', 'title'), name='unique_review'),
         )
+
+    def __str__(self):
+        return self.text[:settings.CHAR_LIMIT]
+
+
+class Comment(models.Model):
+
+    text = models.TextField('Текст', max_length=settings.MAX_COMMENT_LENGTH)
+    review = models.ForeignKey(
+        Review, verbose_name='Отзыв',
+        on_delete=models.CASCADE, related_name='comments'
+    )
+    author = models.ForeignKey(
+        User, verbose_name='Автор публикации',
+        on_delete=models.CASCADE, related_name='comments'
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации', auto_now_add=True
+    )
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+        default_related_name = 'comments'
+        ordering = ('pub_date', 'review', 'text',)
 
     def __str__(self):
         return self.text[:settings.CHAR_LIMIT]

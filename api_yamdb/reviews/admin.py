@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
-from .models import Title, Category, Genre, Review
+from .models import Title, Category, Comment, Genre, Review
 
 
 class TitleAdmin(admin.ModelAdmin):
@@ -23,7 +23,18 @@ class ReviewAdmin(admin.ModelAdmin):
         'pub_date',
     )
 
+class CommentAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'text',
+        'author',
+        'title',
+        'score',
+        'pub_date',
+    )
+
 admin.site.register(Title, TitleAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Genre)
 admin.site.register(Review, ReviewAdmin)
+admin.site.register(Comment, CommentAdmin)
