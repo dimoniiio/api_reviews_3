@@ -6,12 +6,12 @@ class MyUser(AbstractUser):
     """Класс описывающий пользователя."""
 
     ROLE_CHOICES = [
-        ('anon', 'Аноним'),
         ('admin', 'Администратор'),
         ('moderator', 'Модератор'),
         ('user', 'Пользователь'),
     ]
 
+    email = models.EmailField(unique=True)
     role = models.CharField(
         'Роль',
         max_length=10,
