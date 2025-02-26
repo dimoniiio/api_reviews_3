@@ -7,6 +7,7 @@ from .serializers import ReviewSerializer
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """Предсталение отзыва на произведение."""
+
     serializer_class = ReviewSerializer
 
     @property
