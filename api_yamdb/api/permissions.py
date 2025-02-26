@@ -14,6 +14,9 @@ class IsReadOnlyOrAdmin(permissions.IsAuthenticatedOrReadOnly):
 
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
+    """Класс для разрешения просмотра объекта любым пользователем.
+    Редактировать может только автор.
+    """
 
     def has_object_permission(self, request, view, obj):
         return (

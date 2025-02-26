@@ -1,8 +1,7 @@
-from django.contrib.auth import get_user_model
-from django.db import models
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
-
+from django.db import models
 
 User = get_user_model()
 
@@ -46,7 +45,7 @@ class Genre(models.Model):
 
 
 class Review(models.Model):
-    """Класс модели отзыва."""
+    """Класс модели отзыв."""
 
     text = models.TextField('Текст', max_length=settings.MAX_REVIEW_LENGTH)
     author = models.ForeignKey(
@@ -55,7 +54,7 @@ class Review(models.Model):
     )
     title = models.ForeignKey(
         Title, verbose_name='Произведение',
-        on_delete=models.SET_NULL, related_name='reviews'
+        on_delete=models.CASCADE, related_name='reviews'
     )
     score = models.IntegerField(
         'Оценка',
@@ -82,6 +81,7 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
+    """Класс модели комментарий."""
 
     text = models.TextField('Текст', max_length=settings.MAX_COMMENT_LENGTH)
     review = models.ForeignKey(

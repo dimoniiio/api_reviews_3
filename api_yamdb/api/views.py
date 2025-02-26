@@ -3,7 +3,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets, permissions
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -11,9 +11,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .permissions import IsAuthorOrReadOnly, IsReadOnlyOrAdmin
 from .serializers import (CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer,
-                          SignUpSerializer, TitleSerializer,
-                          TokenObtainSerializer, UserMeSerializer)
+                          GenreSerializer, ReviewSerializer, SignUpSerializer,
+                          TitleSerializer, TokenObtainSerializer,
+                          UserMeSerializer)
 from .viewsets import CreateListDeleteViewSet
 from reviews.models import Category, Genre, Review, Title, User
 

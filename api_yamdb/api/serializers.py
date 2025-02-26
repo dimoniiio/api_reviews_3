@@ -1,5 +1,3 @@
-from reviews.models import Review
-
 import datetime
 
 from django.conf import settings
@@ -91,12 +89,12 @@ class TitleSerializer(serializers.ModelSerializer):
             )
         return value
 
-    # def get_rating(self, obj):
-    #     reviews = Review.objects.filter(title=obj)
-    #     if reviews.exists():
-    #         average_score = reviews.aggregate(Avg('score'))['score__avg']
-    #         return round(average_score, 1)
-    #     return None
+    def get_rating(self, obj):
+        reviews = Review.objects.filter(title=obj)
+        if reviews.exists():
+            average_score = reviews.aggregate(Avg('score'))['score__avg']
+            return round(average_score, 1)
+        return None
 
 
 class ReviewSerializer(serializers.ModelSerializer):
