@@ -1,8 +1,17 @@
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
+from .models import Title, Category, Genre, Review
 
-from .models import Review
 
+class TitleAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'name', 'year', 'description')
+    search_fields = ('name',)
+    list_filter = ('year',)
+    empty_value_display = '-пусто-'
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'name', 'slug')
 
 class ReviewAdmin(admin.ModelAdmin):
 
@@ -14,5 +23,7 @@ class ReviewAdmin(admin.ModelAdmin):
         'pub_date',
     )
 
-
+admin.site.register(Title, TitleAdmin)
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(Genre)
 admin.site.register(Review, ReviewAdmin)

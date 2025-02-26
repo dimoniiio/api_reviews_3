@@ -23,6 +23,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'api',
     'reviews',
     'users',
@@ -90,7 +93,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
 TIME_ZONE = 'UTC'
 
@@ -109,22 +112,22 @@ STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
 AUTH_USER_MODEL = 'users.MyUser'
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ],
+# }
 
-SIMPLE_JWT = {
+# SIMPLE_JWT = {
 
-    'ROTATE_REFRESH_TOKENS': True,
+#     'ROTATE_REFRESH_TOKENS': True,
 
-    'BLACKLIST_AFTER_ROTATION': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
 
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
 
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-}
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+# }
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
