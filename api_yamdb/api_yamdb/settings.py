@@ -121,16 +121,16 @@ REST_FRAMEWORK = {
     ),
 }
 
-# SIMPLE_JWT = {
+SIMPLE_JWT = {
 
-#     'ROTATE_REFRESH_TOKENS': True,
+    'ROTATE_REFRESH_TOKENS': True,
 
-#     'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 
-#     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
 
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-# }
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 

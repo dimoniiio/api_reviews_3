@@ -10,6 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ErrorDetail
 
 from .permissions import (IsAdmin, IsAuthorOrModerOrAdminOrReadOnly,
                           IsAuthorOrReadOnly, IsModerator, IsReadOnlyOrAdmin,
@@ -20,6 +21,7 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           UserMeSerializer, UserSerializer)
 from .viewsets import CreateListDeleteViewSet
 from reviews.models import Category, Genre, Review, Title, User
+from .pagination import CustomPageNumberPagination
 
 
 class AuthViewSet(viewsets.ViewSet):
@@ -81,25 +83,6 @@ class AuthViewSet(viewsets.ViewSet):
         # Возвращаем ошибки сериализатора, если данные некорректны
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # @action(detail=False,
-    #         methods=['post'],
-    #         url_path='token',
-    #         authentication_classes=[],
-    #         permission_classes=[])
-    # def token(self, request):
-    #     """Обработка post-запроса по адресу .../auth/token."""
-    #     serializer = TokenObtainSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         username = serializer.validated_data['username']
-    #         user = User.objects.get(username=username)
-
-    #         # Генерация JWT-токена
-    #         refresh = RefreshToken.for_user(user)
-    #         return Response({
-    #             'token': str(refresh.access_token)
-    #         }, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     @action(detail=False,
             methods=['post'],
             url_path='token',
@@ -107,14 +90,33 @@ class AuthViewSet(viewsets.ViewSet):
             permission_classes=[])
     def token(self, request):
         """Обработка post-запроса по адресу .../auth/token."""
+
+        STATUS_CODES = {
+            200: status.HTTP_200_OK,
+            400: status.HTTP_400_BAD_REQUEST,
+            404: status.HTTP_404_NOT_FOUND,
+            500: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        }
+
         serializer = TokenObtainSerializer(data=request.data)
 
         if not serializer.is_valid():
-            # Возвращаем ошибки валидации
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            # Извлекаем статус-код из ValidationError
+            errors = serializer.errors
+            status_code = status.HTTP_400_BAD_REQUEST  # Значение по умолчанию
 
-        # Получаем пользователя из validated_data
+            # Проверяем presence of custom status code in ValidationError
+            for field_errors in errors.values():
+                for error in field_errors:
+                    if isinstance(error, ErrorDetail) and hasattr(error,
+                                                                  'code'):
+                        status_code = STATUS_CODES.get(
+                            error.code,
+                            status.HTTP_400_BAD_REQUEST)
+                        break
+
+            return Response(errors, status=status_code)
+
         user = serializer.validated_data['user']
 
         # Генерация JWT-токена
@@ -141,7 +143,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username']
 
     def list(self, request, *args, **kwargs):
         """Список всех пользователей."""
