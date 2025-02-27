@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -166,8 +166,15 @@ class CategoryViewSet(CreateListDeleteViewSet):
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
-    filterset_fields = ('name')
+    filterset_fields = ('name', )
     permission_classes = (IsReadOnlyOrAdmin, )
+
+    # def get_permissions(self):
+    #     print(self.request.user.is_staff)
+    #     print(self.request.user.username)
+    #     print(self.request.auth)
+    #     print(dir(self.request))
+    #     return super().get_permissions()
 
 
 class GenreViewSet(CreateListDeleteViewSet):

@@ -14,12 +14,12 @@ class Title(models.Model):
         related_name='titles',
         verbose_name='Категория'
     )
-    # genre = models.ManyToManyField(
-    #     'Genre',
-    #     through='GenreTitle',
-    #     related_name='titles',
-    #     verbose_name='Жанр'
-    # )
+    genre = models.ManyToManyField(
+        'Genre',
+        through='GenreTitle',
+        related_name='titles',
+        verbose_name='Жанр'
+    )
     genre = models.IntegerField()
     year = models.IntegerField('Год произведения',)
     description = models.TextField('Описание произведения', blank=True)
@@ -42,6 +42,11 @@ class Genre(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class GenreTitle(models.Model):
+    title = models.ForeignKey(Title, on_delete=models.DO_NOTHING)
+    genre = models.ForeignKey(Genre, on_delete=models.DO_NOTHING)
 
 
 class Review(models.Model):
