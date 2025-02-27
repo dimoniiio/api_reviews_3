@@ -104,11 +104,6 @@ class UserSerializer(serializers.ModelSerializer):
                 "Имя пользователя 'me' запрещено.")
         return value
 
-    # def create(self, validated_data):
-    #     """Создание нового пользователя."""
-    #     user = User.objects.create_user(**validated_data)
-    #     return user
-
 
 class UserMeSerializer(UserSerializer):
     """Сериализатор модели User для пользователя"""
