@@ -17,12 +17,31 @@ class SignUpSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
 
     def validate(self, data):
-        if User.objects.filter(username=data['username']).exists():
+        """Проверка данных: username и email."""
+        username = data.get('username')
+        email = data.get('email')
+
+        if username == 'me':
             raise serializers.ValidationError(
-                "Пользователь с таким username уже существует.")
-        if User.objects.filter(email=data['email']).exists():
+                {'username':
+                 'Использовать имя "me" в качестве username запрещено.'},
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if User.objects.filter(username=username
+                               ).exclude(email=email).exists():
             raise serializers.ValidationError(
-                "Пользователь с таким email уже существует.")
+                {'username': 'Это имя пользователя уже занято.'},
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if User.objects.filter(email=email
+                               ).exclude(username=username).exists():
+            raise serializers.ValidationError(
+                {'email': 'Этот email уже используется.'},
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
         return data
 
 
@@ -32,35 +51,36 @@ class TokenObtainSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
 
-    # def validate(self, data):
-    #     user = User.objects.filter(username=data['username']).first()
-    #     if not user or user.confirmation_code != data['confirmation_code']:
-    #         raise serializers.ValidationError(
-    #             "Неверный username или код подтверждения.")
-    #     return data
-
     def validate(self, data):
         """Проверка данных: username и confirmation_code."""
         username = data.get('username')
         confirmation_code = data.get('confirmation_code')
 
+        if not username:
+            raise serializers.ValidationError(
+                {'username': 'Это поле является обязательным.'},
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if not confirmation_code:
+            raise serializers.ValidationError(
+                {'confirmation_code': 'Это поле является обязательным.'},
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
-            # Пытаемся найти пользователя по username
             user = User.objects.get(username=username)
         except ObjectDoesNotExist:
-            # Если пользователь не найден, вызываем ValidationError
             raise serializers.ValidationError(
                 {'username': 'Пользователь с таким именем не существует.'},
                 code=status.HTTP_404_NOT_FOUND
             )
 
-        # Проверяем confirmation_code
         if user.confirmation_code != confirmation_code:
             raise serializers.ValidationError(
-                {'confirmation_code': 'Неверный код подтверждения.'}
+                {'confirmation_code': 'Неверный код подтверждения.'},
+                code=status.HTTP_400_BAD_REQUEST
             )
 
-        # Добавляем пользователя в validated_data для дальнейшего использования
         data['user'] = user
         return data
 
@@ -72,22 +92,18 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role')
         extra_kwargs = {
-            'role': {'required': False},                         # Роль необязательна
-            'bio': {'required': False},                          # Биография необязательна
-            'first_name': {'required': False},                   # Имя необязательно
-            'last_name': {'required': False},                    # Фамилия необязательна
+            'role': {'required': False},
+            'bio': {'required': False},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
         }
 
     def validate_username(self, value):
+        """Проверка, что username не может быть 'me'."""
         if value.lower() == 'me':
             raise serializers.ValidationError(
                 "Имя пользователя 'me' запрещено.")
         return value
-
-    # def create(self, validated_data):
-    #     """Создание нового пользователя."""
-    #     user = User.objects.create_user(**validated_data)
-    #     return user
 
 
 class UserMeSerializer(UserSerializer):

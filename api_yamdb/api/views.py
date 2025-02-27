@@ -1,16 +1,17 @@
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .pagination import CustomPageNumberPagination
 from .permissions import (IsAdmin, IsAuthorOrModerOrAdminOrReadOnly,
                           IsAuthorOrReadOnly, IsModerator, IsReadOnlyOrAdmin,
                           IsUser)
@@ -81,25 +82,6 @@ class AuthViewSet(viewsets.ViewSet):
         # Возвращаем ошибки сериализатора, если данные некорректны
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # @action(detail=False,
-    #         methods=['post'],
-    #         url_path='token',
-    #         authentication_classes=[],
-    #         permission_classes=[])
-    # def token(self, request):
-    #     """Обработка post-запроса по адресу .../auth/token."""
-    #     serializer = TokenObtainSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         username = serializer.validated_data['username']
-    #         user = User.objects.get(username=username)
-
-    #         # Генерация JWT-токена
-    #         refresh = RefreshToken.for_user(user)
-    #         return Response({
-    #             'token': str(refresh.access_token)
-    #         }, status=status.HTTP_200_OK)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     @action(detail=False,
             methods=['post'],
             url_path='token',
@@ -107,14 +89,33 @@ class AuthViewSet(viewsets.ViewSet):
             permission_classes=[])
     def token(self, request):
         """Обработка post-запроса по адресу .../auth/token."""
+
+        STATUS_CODES = {
+            200: status.HTTP_200_OK,
+            400: status.HTTP_400_BAD_REQUEST,
+            404: status.HTTP_404_NOT_FOUND,
+            500: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        }
+
         serializer = TokenObtainSerializer(data=request.data)
 
         if not serializer.is_valid():
-            # Возвращаем ошибки валидации
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            # Извлекаем статус-код из ValidationError
+            errors = serializer.errors
+            status_code = status.HTTP_400_BAD_REQUEST  # Значение по умолчанию
 
-        # Получаем пользователя из validated_data
+            # Проверяем presence of custom status code in ValidationError
+            for field_errors in errors.values():
+                for error in field_errors:
+                    if isinstance(error, ErrorDetail) and hasattr(error,
+                                                                  'code'):
+                        status_code = STATUS_CODES.get(
+                            error.code,
+                            status.HTTP_400_BAD_REQUEST)
+                        break
+
+            return Response(errors, status=status_code)
+
         user = serializer.validated_data['user']
 
         # Генерация JWT-токена
@@ -141,7 +142,21 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username']
+    lookup_field = 'username'
+
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def update(self, request, *args, **kwargs):
+        """Запрещаем использование PUT-запроса."""
+        if request.method == 'PUT':
+            return Response(
+                {'detail': 'Метод PUT не поддерживается.'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().update(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
         """Список всех пользователей."""
@@ -165,13 +180,11 @@ class UserViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    # def create(self, request, *args, **kwargs):
-    #     """Создание нового пользователя."""
-    #     serializer = self.get_serializer(data=request.data)
-    #     if serializer.is_valid():
-    #         user = serializer.save()  # Создание пользователя
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def retrieve(self, request, *args, **kwargs):
+        """Получение данных о конкретном пользователе по username."""
+        instance = self.get_object()  # Получаем пользователя по username
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         """Удаление пользователя."""

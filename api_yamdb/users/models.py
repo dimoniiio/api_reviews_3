@@ -21,10 +21,6 @@ class MyUser(AbstractUser):
     bio = models.TextField('Биография', blank=True)
     confirmation_code = models.TextField('Код подтверждения')
 
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-
     @property
     def is_admin(self):
         return self.role == 'admin' or self.is_superuser
@@ -39,3 +35,7 @@ class MyUser(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
