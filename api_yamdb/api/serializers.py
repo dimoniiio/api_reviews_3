@@ -2,11 +2,11 @@ import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import RegexValidator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -14,8 +14,18 @@ from reviews.models import Category, Comment, Genre, Review, Title, User
 class SignUpSerializer(serializers.Serializer):
     """Сериализатор для обработки запросов по адресу .../auth/signup."""
 
-    email = serializers.EmailField(required=True)
-    username = serializers.CharField(required=True)
+    email = serializers.EmailField(
+        required=True,
+        max_length=settings.MAX_EMAIL_LEN,
+    )
+    username = serializers.CharField(
+        required=True,
+        max_length=settings.MAX_USERNAME_LEN,
+        validators=[RegexValidator(
+            r'^[\w.@+-]+\Z',
+            message=('Имя пользователя может содержать только буквы,'
+                     'цифры и символы @/./+/-/_.'))]
+    )
 
     def validate(self, data):
         """Проверка данных: username и email."""
