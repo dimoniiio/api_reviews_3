@@ -260,9 +260,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Предсталение отзыва на произведение."""
 
     serializer_class = ReviewSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,
-                          IsAuthorOrReadOnly,)
+                          IsAuthorOrModerOrAdminOrReadOnly,)
 
     @property
     def reviewed_title(self):
@@ -277,14 +277,20 @@ class ReviewViewSet(viewsets.ModelViewSet):
         """Метод переопределения автора и произведения у отзыва."""
         serializer.save(author=self.request.user, title=self.reviewed_title)
 
+    def update(self, request, *args, **kwargs):
+        if self.request.method == 'PUT':
+            return Response({'detail': 'Метод PUT не поддерживается.'},
+                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Предсталение комментария к отзыву."""
 
     serializer_class = CommentSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,
-                          IsAuthorOrReadOnly,)
+                          IsAuthorOrModerOrAdminOrReadOnly,)
 
     @property
     def reviewed_title(self):
@@ -304,8 +310,14 @@ class CommentViewSet(viewsets.ModelViewSet):
         return self.commented_review.comments.all()
 
     def perform_create(self, serializer):
-        """Метод переопределения автора и произведения у отзыва."""
+        """Метод переопределения автора и отзыва у коментария."""
         serializer.save(
             author=self.request.user,
             review=self.commented_review
         )
+
+    def update(self, request, *args, **kwargs):
+        if self.request.method == 'PUT':
+            return Response({'detail': 'Метод PUT не поддерживается.'},
+                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)

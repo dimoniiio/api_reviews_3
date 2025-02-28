@@ -77,7 +77,7 @@ class Review(models.Model):
 
     text = models.TextField('Текст', max_length=settings.MAX_REVIEW_LENGTH)
     author = models.ForeignKey(
-        User, verbose_name='Автор публикации',
+        User, verbose_name='Автор',
         on_delete=models.CASCADE, related_name='reviews'
     )
     title = models.ForeignKey(
@@ -99,10 +99,7 @@ class Review(models.Model):
         verbose_name_plural = 'Отзывы'
         default_related_name = 'reviews'
         ordering = ('-pub_date', 'title', 'text',)
-        constraints = (
-            models.UniqueConstraint(
-                fields=('author', 'title'), name='unique_review'),
-        )
+        unique_together = ['author', 'title']
 
     def __str__(self):
         return self.text[:settings.CHAR_LIMIT]
@@ -117,7 +114,7 @@ class Comment(models.Model):
         on_delete=models.CASCADE, related_name='comments'
     )
     author = models.ForeignKey(
-        User, verbose_name='Автор публикации',
+        User, verbose_name='Автор',
         on_delete=models.CASCADE, related_name='comments'
     )
     pub_date = models.DateTimeField(

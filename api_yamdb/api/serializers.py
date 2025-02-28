@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
 
@@ -194,18 +195,26 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
-        validators = (
-            serializers.UniqueTogetherValidator(
-                queryset=model.objects.all(),
-                fields=('author', 'title'),
-                message=("Вы уже оставили отзыв.")
-            ),
-        )
+
+    def validate(self, data):
+        if self.context.get('request').method == 'POST':
+            unique_review = Review.objects.filter(
+                author=self.context.get('request').user,
+                title=get_object_or_404(
+                    Title,
+                    pk=self.context.get('view').kwargs.get('title_id')
+                )
+            )
+            if unique_review.exists():
+                raise serializers.ValidationError(
+                    'Нельзя оставлять более одного отзыва.'
+                )
+        return data
 
     def validate_score(self, value):
         """Метод валидации рейтинга"""
         if (
-            isinstance(value)
+            isinstance(value, int)
             and settings.MIN_SCORE_VALUE <= value <= settings.MAX_SCORE_VALUE
         ):
             return value
@@ -215,7 +224,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate_text(self, value):
         """Метод валидации текста отзыва."""
-        if len(value) > settings.MAX_REVIEW_LENGTH:
+        if len(value) < settings.MAX_REVIEW_LENGTH:
             return value
         raise serializers.ValidationError(
             'Максимальное количество символов в отзыве: '
