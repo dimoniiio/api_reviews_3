@@ -10,7 +10,8 @@ class Title(models.Model):
     name = models.CharField('Название произведения', max_length=256)
     category = models.ForeignKey(
         'Category',
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='titles',
         verbose_name='Категория'
     )
@@ -44,8 +45,16 @@ class Genre(models.Model):
 
 
 class GenreTitle(models.Model):
-    title = models.ForeignKey(Title, on_delete=models.DO_NOTHING)
-    genre = models.ForeignKey(Genre, on_delete=models.DO_NOTHING)
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    genre = models.ForeignKey(
+        Genre,
+        on_delete=models.SET_NULL,
+        null=True
+    )
 
 
 class Review(models.Model):

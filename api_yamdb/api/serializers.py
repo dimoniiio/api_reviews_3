@@ -115,18 +115,6 @@ class UserMeSerializer(UserSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для жанров."""
 
-    # slug = serializers.SlugField(
-    #     max_length=50,
-    #     validators=[UniqueValidator(queryset=Genre.objects.all())],
-    # )
-    # slug = SlugRelatedField(
-    #     queryset=Genre.objects.all(),
-    #     slug_field='name',
-    #     many=True,
-    #     validators=[UniqueValidator(queryset=Genre.objects.all())]
-    # )
-    # slug = serializers.SlugRelatedField(many=True, slug_field='slug', queryset=Genre.objects.all())
-
     class Meta:
         model = Genre
         fields = ('name', 'slug')
@@ -135,17 +123,6 @@ class GenreSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для категорий."""
 
-    # slug = serializers.SlugRelatedField(
-    #     max_length=50,
-    #     validators=[UniqueValidator(queryset=Category.objects.all())]
-    # )
-    # slug = SlugRelatedField(
-    #     queryset=Category.objects.all(),
-    #     slug_field='name',
-    #     many=True,
-    #     validators=[UniqueValidator(queryset=Category.objects.all())]
-    # )
-
     class Meta:
         model = Category
         fields = ('name', 'slug')
@@ -153,24 +130,20 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для произведений."""
-
-    genre = GenreSerializer(many=True)
-    # genre = SlugRelatedField(
-    #     queryset=Genre.objects.all(),
-    #     slug_field='slug',
-    #     many=True
-    # )
-    # category = SlugRelatedField(
-    #     queryset=Category.objects.all(),
-    #     slug_field='slug'
-    # )
-    category = CategorySerializer()
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Genre.objects.all(), many=True
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all()
+    )
     rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
-                  'category')
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre',
+            'category'
+        )
 
     def validate_year(self, value):
         now_year = datetime.date.today().year
@@ -184,8 +157,23 @@ class TitleSerializer(serializers.ModelSerializer):
         reviews = Review.objects.filter(title=obj)
         if reviews.exists():
             average_score = reviews.aggregate(Avg('score'))['score__avg']
-            return round(average_score, 1)
+            return int(round(average_score, 1))
         return None
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if representation.get('category') is None:
+            return representation
+        genre_instances = instance.genre.all()
+        representation['genre'] = [
+            {'name': genre.name, 'slug': genre.slug} for genre in genre_instances
+        ]
+        category_instance = instance.category
+        representation['category'] = {
+            'name': category_instance.name,
+            'slug': category_instance.slug
+        }
+        return representation
 
 
 class ReviewSerializer(serializers.ModelSerializer):
