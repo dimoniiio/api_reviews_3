@@ -5,12 +5,14 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ErrorDetail
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.exceptions import ErrorDetail, MethodNotAllowed, PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .filters import TitleFilter
 from .pagination import CustomPageNumberPagination
 from .permissions import (IsAdmin, IsAuthorOrModerOrAdminOrReadOnly,
                           IsAuthorOrReadOnly, IsModerator, IsReadOnlyOrAdmin,
@@ -219,17 +221,11 @@ class CategoryViewSet(CreateListDeleteViewSet):
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
     filter_backends = (filters.SearchFilter,)
-    filterset_fields = ('name', )
+    search_fields = ('name', )
     permission_classes = (IsReadOnlyOrAdmin, )
-
-    # def get_permissions(self):
-    #     print(self.request.user.is_staff)
-    #     print(self.request.user.username)
-    #     print(self.request.auth)
-    #     print(dir(self.request))
-    #     return super().get_permissions()
+    lookup_field = 'slug'
 
 
 class GenreViewSet(CreateListDeleteViewSet):
@@ -237,8 +233,11 @@ class GenreViewSet(CreateListDeleteViewSet):
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('name', )
     permission_classes = (IsReadOnlyOrAdmin, )
+    lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -246,10 +245,15 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    pagination_class = PageNumberPagination
-    filter_backends = (filters.SearchFilter,)
-    filterset_fields = ('category', 'genre', 'name', 'year')
+    pagination_class = CustomPageNumberPagination
+    filterset_class = TitleFilter
     permission_classes = (IsReadOnlyOrAdmin, )
+
+    def update(self, request, *args, **kwargs):
+        if self.request.method == 'PUT':
+            return Response({'detail': 'Метод PUT не поддерживается.'},
+                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
