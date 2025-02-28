@@ -177,7 +177,8 @@ class TitleSerializer(serializers.ModelSerializer):
             return representation
         genre_instances = instance.genre.all()
         representation['genre'] = [
-            {'name': genre.name, 'slug': genre.slug} for genre in genre_instances
+            {'name': genre.name,
+             'slug': genre.slug} for genre in genre_instances
         ]
         category_instance = instance.category
         representation['category'] = {

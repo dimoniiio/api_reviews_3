@@ -5,18 +5,15 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.exceptions import ErrorDetail, MethodNotAllowed, PermissionDenied
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.exceptions import ErrorDetail
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .filters import TitleFilter
 from .pagination import CustomPageNumberPagination
 from .permissions import (IsAdmin, IsAuthorOrModerOrAdminOrReadOnly,
-                          IsAuthorOrReadOnly, IsModerator, IsReadOnlyOrAdmin,
-                          IsUser)
+                          IsReadOnlyOrAdmin)
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleSerializer, TokenObtainSerializer,
