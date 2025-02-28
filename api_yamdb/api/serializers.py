@@ -115,10 +115,17 @@ class UserMeSerializer(UserSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для жанров."""
 
-    slug = serializers.SlugField(
-        max_length=50,
-        validators=[UniqueValidator(queryset=Genre.objects.all())]
-    )
+    # slug = serializers.SlugField(
+    #     max_length=50,
+    #     validators=[UniqueValidator(queryset=Genre.objects.all())],
+    # )
+    # slug = SlugRelatedField(
+    #     queryset=Genre.objects.all(),
+    #     slug_field='name',
+    #     many=True,
+    #     validators=[UniqueValidator(queryset=Genre.objects.all())]
+    # )
+    # slug = serializers.SlugRelatedField(many=True, slug_field='slug', queryset=Genre.objects.all())
 
     class Meta:
         model = Genre
@@ -128,10 +135,16 @@ class GenreSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для категорий."""
 
-    slug = serializers.SlugField(
-        max_length=50,
-        validators=[UniqueValidator(queryset=Category.objects.all())]
-    )
+    # slug = serializers.SlugRelatedField(
+    #     max_length=50,
+    #     validators=[UniqueValidator(queryset=Category.objects.all())]
+    # )
+    # slug = SlugRelatedField(
+    #     queryset=Category.objects.all(),
+    #     slug_field='name',
+    #     many=True,
+    #     validators=[UniqueValidator(queryset=Category.objects.all())]
+    # )
 
     class Meta:
         model = Category
@@ -141,14 +154,17 @@ class CategorySerializer(serializers.ModelSerializer):
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для произведений."""
 
-    genre = SlugRelatedField(
-        queryset=Genre.objects.all(),
-        slug_field='name', many=True
-    )
-    category = SlugRelatedField(
-        queryset=Category.objects.all(),
-        slug_field='name'
-    )
+    genre = GenreSerializer(many=True)
+    # genre = SlugRelatedField(
+    #     queryset=Genre.objects.all(),
+    #     slug_field='slug',
+    #     many=True
+    # )
+    # category = SlugRelatedField(
+    #     queryset=Category.objects.all(),
+    #     slug_field='slug'
+    # )
+    category = CategorySerializer()
     rating = serializers.SerializerMethodField()
 
     class Meta:

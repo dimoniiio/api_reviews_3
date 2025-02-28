@@ -20,7 +20,6 @@ class Title(models.Model):
         related_name='titles',
         verbose_name='Жанр'
     )
-    genre = models.IntegerField()
     year = models.IntegerField('Год произведения',)
     description = models.TextField('Описание произведения', blank=True)
 
