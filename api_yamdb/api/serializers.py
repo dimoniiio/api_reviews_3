@@ -2,11 +2,10 @@ import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import RegexValidator
 from django.db.models import Avg
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueValidator
-from django.core.validators import RegexValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
