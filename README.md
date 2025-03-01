@@ -181,6 +181,16 @@
 
 ## Если у вас есть вопросы или предложения, свяжитесь с нами: 
 
-Email: [Дмитрий]dimoniiio@yandex.ru 
+Email: [Дмитрий Иванов](dimoniiio@yandex.ru) 
 
-GitHub: [dimoniiio](https://github.com/dimoniiio) 
+GitHub: [dimoniiio](https://github.com/dimoniiio)
+
+
+Email: [Дмитрий Ларин](tiger-vuts@mail.ru) 
+
+GitHub: [NGC6543](https://github.com/NGC6543)
+
+
+Email: [Андрей Карахтанов](super.andrew100@yandex.com) 
+
+GitHub: [AndreyKarakhtanov](https://github.com/AndreyKarakhtanov)
