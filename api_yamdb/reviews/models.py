@@ -89,7 +89,7 @@ class Title(models.Model):
         ordering = ('name',)
 
     def clean(self):
-        now_year = datetime.date.today().year # ПРОВЕРИТЬ РАБОТАЕТ ЛИ?
+        now_year = datetime.date.today().year
         if self.year > now_year:
             raise ValidationError(
                 'Год выпуска не может быть больше текущего года.'

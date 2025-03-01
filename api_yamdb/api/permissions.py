@@ -9,15 +9,6 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
-<<<<<<< HEAD
-        if (
-            request.method == 'PATCH'
-            and request.user.is_authenticated
-            and request.user.is_admin
-        ):
-            return True
-=======
->>>>>>> fix_our_review
         return request.user.is_authenticated and (
             request.user.is_admin
         )

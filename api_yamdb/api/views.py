@@ -6,7 +6,8 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ErrorDetail
+from rest_framework.exceptions import ErrorDetail, MethodNotAllowed
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -14,12 +15,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .filters import TitleFilter
 from .pagination import CustomPageNumberPagination
 from .permissions import (IsAdmin, IsAuthorOrModerOrAdminOrReadOnly,
-<<<<<<< HEAD
-                          IsReadOnlyOrAdmin)
-=======
                           IsAuthorOrReadOnly, IsModerator, IsAdminOrReadOnly,
                           IsUser)
->>>>>>> fix_our_review
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
@@ -240,7 +237,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')
     )
-    pagination_class = CustomPageNumberPagination
+    pagination_class = PageNumberPagination
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly, )
 
@@ -253,7 +250,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
         return TitleWriteSerializer
-
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
