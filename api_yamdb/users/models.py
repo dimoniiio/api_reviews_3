@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from .constants import ADMIN, MODERATOR, USER
+from .constants import ADMIN, MAX_USERNAME_LEN, MODERATOR, USER
+from api.validators import username_validator
 
 
 class API_User(AbstractUser):
@@ -11,6 +12,20 @@ class API_User(AbstractUser):
         USER = USER, 'Пользователь'
         MODERATOR = MODERATOR, 'Модератор'
         ADMIN = ADMIN, 'Администратор'
+
+    username = models.CharField(
+        'Имя пользователя',
+        max_length=MAX_USERNAME_LEN,
+        unique=True,
+        help_text=('Только буквы, цифры и @/./+/-/_'),
+        validators=[
+            AbstractUser._meta.get_field('username').validators[0],
+            username_validator
+        ],
+        error_messages={
+            'unique': 'Пользователь с таким именем уже существует.',
+        },
+    )
 
     email = models.EmailField(unique=True)
     role = models.CharField(

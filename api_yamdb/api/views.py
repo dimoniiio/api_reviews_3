@@ -1,21 +1,15 @@
-from django.conf import settings
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ErrorDetail
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitleFilter
-from .pagination import CustomPageNumberPagination
-from .permissions import (
-    IsAdmin, IsAdminOrReadOnly, IsAuthorOrModerOrAdminOrReadOnly
-)
+from .permissions import (IsAdmin, IsAdminOrReadOnly,
+                          IsAuthorOrModerOrAdminOrReadOnly)
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
@@ -85,7 +79,6 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
-    pagination_class = CustomPageNumberPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['username']
     lookup_field = 'username'
@@ -134,7 +127,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')
     )
-    pagination_class = PageNumberPagination
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly, )
     http_method_names = ('get', 'post', 'patch', 'delete')

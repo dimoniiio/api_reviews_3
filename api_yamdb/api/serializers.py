@@ -3,11 +3,13 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
 
 from .validators import validate_username_not_me
 from reviews.models import Category, Comment, Genre, Review, Title, User
+from users.constants import MAX_EMAIL_LEN, MAX_USERNAME_LEN
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -15,11 +17,11 @@ class SignUpSerializer(serializers.Serializer):
 
     email = serializers.EmailField(
         required=True,
-        max_length=settings.MAX_EMAIL_LEN,
+        max_length=MAX_EMAIL_LEN,
     )
     username = serializers.CharField(
         required=True,
-        max_length=settings.MAX_USERNAME_LEN,
+        max_length=MAX_USERNAME_LEN,
         validators=[
             RegexValidator(
                 r'^[\w.@+-]+\Z',
@@ -82,7 +84,7 @@ class SignUpSerializer(serializers.Serializer):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
             fail_silently=True,
-        )  
+        )
 
 
 class TokenObtainSerializer(serializers.Serializer):
