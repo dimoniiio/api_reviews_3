@@ -1,67 +1,55 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+from .constants import MAX_LENGTH_NAME, MAX_LENGTH_SLUG
 
 User = get_user_model()
 
 
-class Title(models.Model):
-    """Класс модели произведения."""
+class NameAndSlugAbstractModel(models.Model):
+    """Абстрактный класс для наследования полей названия и слага."""
 
-    name = models.CharField('Название произведения', max_length=256)
-    category = models.ForeignKey(
-        'Category',
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='titles',
-        verbose_name='Категория'
+    name = models.CharField(
+        'Название категории',
+        max_length=MAX_LENGTH_NAME
     )
-    genre = models.ManyToManyField(
-        'Genre',
-        through='GenreTitle',
-        related_name='titles',
-        verbose_name='Жанр'
+    slug = models.SlugField(
+        max_length=MAX_LENGTH_SLUG,
+        unique=True
     )
-    year = models.IntegerField('Год произведения',)
-    description = models.TextField('Описание произведения', blank=True)
 
     class Meta:
-        ordering = ['id']
+        abstract = True
+        ordering = ('slug',)
 
     def __str__(self):
         return self.name
 
 
-class Category(models.Model):
+class Category(NameAndSlugAbstractModel):
     """Класс модели категория."""
 
-    name = models.CharField('Название категории', max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
-
     class Meta:
-        ordering = ['id']
-
-    def __str__(self):
-        return self.name
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
 
-class Genre(models.Model):
+class Genre(NameAndSlugAbstractModel):
     """Класс модели жанр."""
 
-    name = models.CharField('Название жанра', max_length=256)
-    slug = models.SlugField(max_length=50, unique=True)
-
     class Meta:
-        ordering = ['id']
-
-    def __str__(self):
-        return self.name
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
 
 class GenreTitle(models.Model):
     title = models.ForeignKey(
-        Title,
+        'Title',
         on_delete=models.SET_NULL,
         null=True
     )
@@ -70,6 +58,45 @@ class GenreTitle(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
+
+
+class Title(models.Model):
+    """Класс модели произведения."""
+
+    name = models.CharField(
+        'Название произведения',
+        max_length=MAX_LENGTH_NAME
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='titles',
+        verbose_name='Категория'
+    )
+    genre = models.ManyToManyField(
+        Genre,
+        through=GenreTitle,
+        related_name='titles',
+        verbose_name='Жанр'
+    )
+    year = models.PositiveSmallIntegerField('Год произведения',)
+    description = models.TextField('Описание произведения', blank=True)
+
+    class Meta:
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
+        ordering = ('name',)
+
+    def clean(self):
+        now_year = datetime.date.today().year
+        if self.year > now_year:
+            raise ValidationError(
+                'Год выпуска не может быть больше текущего года.'
+            )
+
+    def __str__(self):
+        return self.name
 
 
 class Review(models.Model):
