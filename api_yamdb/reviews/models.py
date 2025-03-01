@@ -1,12 +1,14 @@
 import datetime
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import MAX_LENGTH_NAME, MAX_LENGTH_SLUG
+from .constants import (
+    CHAR_LIMIT, MAX_COMMENT_LENGTH, MAX_LENGTH_NAME, MAX_LENGTH_SLUG,
+    MAX_REVIEW_LENGTH, MAX_SCORE_VALUE, MIN_SCORE_VALUE
+)
 
 User = get_user_model()
 
@@ -102,7 +104,7 @@ class Title(models.Model):
 class Review(models.Model):
     """Класс модели отзыв."""
 
-    text = models.TextField('Текст', max_length=settings.MAX_REVIEW_LENGTH)
+    text = models.TextField('Текст', max_length=MAX_REVIEW_LENGTH)
     author = models.ForeignKey(
         User, verbose_name='Автор',
         on_delete=models.CASCADE, related_name='reviews'
@@ -111,12 +113,11 @@ class Review(models.Model):
         Title, verbose_name='Произведение',
         on_delete=models.CASCADE, related_name='reviews'
     )
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         'Оценка',
-        default=1,
         validators=[
-            MaxValueValidator(settings.MAX_SCORE_VALUE),
-            MinValueValidator(settings.MIN_SCORE_VALUE)
+            MaxValueValidator(MAX_SCORE_VALUE),
+            MinValueValidator(MIN_SCORE_VALUE)
         ]
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
@@ -129,13 +130,13 @@ class Review(models.Model):
         unique_together = ['author', 'title']
 
     def __str__(self):
-        return self.text[:settings.CHAR_LIMIT]
+        return self.text[:CHAR_LIMIT]
 
 
 class Comment(models.Model):
     """Класс модели комментарий."""
 
-    text = models.TextField('Текст', max_length=settings.MAX_COMMENT_LENGTH)
+    text = models.TextField('Текст', max_length=MAX_COMMENT_LENGTH)
     review = models.ForeignKey(
         Review, verbose_name='Отзыв',
         on_delete=models.CASCADE, related_name='comments'
@@ -155,4 +156,4 @@ class Comment(models.Model):
         ordering = ('pub_date', 'review', 'text',)
 
     def __str__(self):
-        return self.text[:settings.CHAR_LIMIT]
+        return self.text[:CHAR_LIMIT]

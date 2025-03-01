@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
 
@@ -178,36 +177,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         if self.context.get('request').method == 'POST':
             unique_review = Review.objects.filter(
                 author=self.context.get('request').user,
-                title=get_object_or_404(
-                    Title,
-                    pk=self.context.get('view').kwargs.get('title_id')
-                )
+                title_id=self.context.get('view').kwargs.get('title_id')
             )
             if unique_review.exists():
                 raise serializers.ValidationError(
                     'Нельзя оставлять более одного отзыва.'
                 )
         return data
-
-    def validate_score(self, value):
-        """Метод валидации рейтинга"""
-        if (
-            isinstance(value, int)
-            and settings.MIN_SCORE_VALUE <= value <= settings.MAX_SCORE_VALUE
-        ):
-            return value
-        raise serializers.ValidationError(
-            'Оценка должена быть в диапозоне '
-            f'от {settings.MIN_SCORE_VALUE} до {settings.MAX_SCORE_VALUE}.')
-
-    def validate_text(self, value):
-        """Метод валидации текста отзыва."""
-        if len(value) < settings.MAX_REVIEW_LENGTH:
-            return value
-        raise serializers.ValidationError(
-            'Максимальное количество символов в отзыве: '
-            f'{settings.MAX_REVIEW_LENGTH}.'
-        )
 
 
 class CommentSerializer(serializers.ModelSerializer):
