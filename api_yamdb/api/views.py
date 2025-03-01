@@ -10,34 +10,23 @@ from rest_framework.exceptions import ErrorDetail, MethodNotAllowed
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitleFilter
 from .pagination import CustomPageNumberPagination
-from .permissions import (IsAdmin, IsAuthorOrModerOrAdminOrReadOnly,
-                          IsAuthorOrReadOnly, IsModerator, IsAdminOrReadOnly,
-                          IsUser)
+from .permissions import (IsAdmin, IsAdminOrReadOnly,
+                          IsAuthorOrModerOrAdminOrReadOnly)
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
-                          TokenObtainSerializer,
-                          UserMeSerializer, UserSerializer)
+                          TokenObtainSerializer, UserMeSerializer,
+                          UserSerializer)
 from .viewsets import CreateListDeleteViewSet
 from reviews.models import Category, Genre, Review, Title, User
 
 
 class AuthViewSet(viewsets.ViewSet):
     """Регистрация новых пользователей и редактирование профиля."""
-
-    def send_email_token(self, text, confirmation_code, email):
-        """Отправка сообщения на почту."""
-        send_mail(
-            subject=text,
-            message=f'Ваш код подтверждения: {confirmation_code}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=True,
-        )
 
     @action(detail=False,
             methods=['post'],
@@ -49,40 +38,12 @@ class AuthViewSet(viewsets.ViewSet):
         serializer = SignUpSerializer(data=request.data)
 
         if serializer.is_valid():
-            username = serializer.validated_data['username']
-            email = serializer.validated_data['email']
+            user = serializer.save()
+            return Response(
+                {'email': user.email, 'username': user.username},
+                status=status.HTTP_200_OK
+            )
 
-            # Попытка получить или создать пользователя
-            user, created = User.objects.get_or_create(
-                username=username, email=email)
-
-            if created:
-                # Для нового пользователя: генерация confirmation_code
-                confirmation_code = default_token_generator.make_token(user)
-                user.confirmation_code = confirmation_code
-                user.save()
-                # Отправка письма с кодом подтверждения
-                self.send_email_token(text='Код подтверждения YaMDB',
-                                      confirmation_code=confirmation_code,
-                                      email=email)
-                return Response(
-                    {'email': email, 'username': username},
-                    status=status.HTTP_200_OK)
-
-            else:
-                # Для существующего пользователя: обновление confirmation_code
-                confirmation_code = default_token_generator.make_token(user)
-                user.confirmation_code = confirmation_code
-                user.save()
-                # Отправка нового кода подтверждения
-                self.send_email_token(text='Новый код подтверждения YaMDB',
-                                      confirmation_code=confirmation_code,
-                                      email=email)
-                return Response(
-                    {'detail': 'Код подтверждения отправлен повторно.'},
-                    status=status.HTTP_200_OK)
-
-        # Возвращаем ошибки сериализатора, если данные некорректны
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False,
@@ -93,38 +54,17 @@ class AuthViewSet(viewsets.ViewSet):
     def token(self, request):
         """Обработка post-запроса по адресу .../auth/token."""
 
-        STATUS_CODES = {
-            200: status.HTTP_200_OK,
-            400: status.HTTP_400_BAD_REQUEST,
-            404: status.HTTP_404_NOT_FOUND,
-            500: status.HTTP_500_INTERNAL_SERVER_ERROR,
-        }
-
         serializer = TokenObtainSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            # Извлекаем статус-код из ValidationError
-            errors = serializer.errors
-            status_code = status.HTTP_400_BAD_REQUEST  # Значение по умолчанию
-
-            # Проверяем presence of custom status code in ValidationError
-            for field_errors in errors.values():
-                for error in field_errors:
-                    if isinstance(error, ErrorDetail) and hasattr(error,
-                                                                  'code'):
-                        status_code = STATUS_CODES.get(
-                            error.code,
-                            status.HTTP_400_BAD_REQUEST)
-                        break
-
-            return Response(errors, status=status_code)
+        if not serializer.is_valid(raise_exception=True):
+            pass
 
         user = serializer.validated_data['user']
 
         # Генерация JWT-токена
-        refresh = RefreshToken.for_user(user)
+        access_token = AccessToken.for_user(user)
         return Response({
-            'token': str(refresh.access_token)
+            'token': str(access_token)
         }, status=status.HTTP_200_OK)
 
 
@@ -150,50 +90,7 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['username']
     lookup_field = 'username'
 
-    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
-
-    def update(self, request, *args, **kwargs):
-        """Запрещаем использование PUT-запроса."""
-        if request.method == 'PUT':
-            return Response(
-                {'detail': 'Метод PUT не поддерживается.'},
-                status=status.HTTP_405_METHOD_NOT_ALLOWED
-            )
-        return super().update(request, *args, **kwargs)
-
-    def list(self, request, *args, **kwargs):
-        """Список всех пользователей."""
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def create(self, request, *args, **kwargs):
-        """Создание нового пользователя."""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
-
-    def retrieve(self, request, *args, **kwargs):
-        """Получение данных о конкретном пользователе по username."""
-        instance = self.get_object()  # Получаем пользователя по username
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        """Удаление пользователя."""
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    http_method_names = ['get', 'post', 'patch', 'delete',]
 
     @action(detail=False,
             methods=['get', 'patch'],
@@ -208,7 +105,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = UserMeSerializer(user)
             return Response(serializer.data)
-        elif request.method == 'PATCH':
+        else:
             serializer = UserMeSerializer(user,
                                           data=request.data,
                                           partial=True)

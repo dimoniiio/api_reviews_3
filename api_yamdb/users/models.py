@@ -1,42 +1,38 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .constants import ADMIN, MODERATOR, USER
 
-class MyUser(AbstractUser):
+
+class API_User(AbstractUser):
     """Класс описывающий пользователя."""
 
-    ROLE_CHOICES = [
-        ('admin', 'Администратор'),
-        ('moderator', 'Модератор'),
-        ('user', 'Пользователь'),
-    ]
+    class Role(models.TextChoices):
+        USER = USER, 'Пользователь'
+        MODERATOR = MODERATOR, 'Модератор'
+        ADMIN = ADMIN, 'Администратор'
 
     email = models.EmailField(unique=True)
     role = models.CharField(
         'Роль',
-        max_length=10,
-        choices=ROLE_CHOICES,
-        default='user'
+        max_length=max(len(role) for role, _ in Role.choices),
+        choices=Role.choices,
+        default=Role.USER
     )
     bio = models.TextField('Биография', blank=True)
-    confirmation_code = models.TextField('Код подтверждения')
 
     @property
     def is_admin(self):
-        return self.role == 'admin' or self.is_superuser
+        return self.role == ADMIN or self.is_superuser or self.is_staff
 
     @property
     def is_moderator(self):
-        return self.role == 'moderator'
-
-    @property
-    def is_user(self):
-        return self.role == 'user'
+        return self.role == MODERATOR
 
     def __str__(self):
-        return f"{self.username} ({self.get_role_display()})"
+        return f"{self.username} ({self.role})"
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['id']
+        ordering = ['username', 'email']
