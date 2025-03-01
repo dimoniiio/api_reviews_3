@@ -1,7 +1,5 @@
-from pathlib import Path
-
 from datetime import timedelta
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -111,9 +109,13 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 
-AUTH_USER_MODEL = 'users.MyUser'
+AUTH_USER_MODEL = 'users.API_User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10,
+    'page_size_query_param': 'page_size',
+    'max_page_size': 100,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -137,11 +139,3 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
-
-CHAR_LIMIT = 32
-MAX_REVIEW_LENGTH = 4096
-MAX_COMMENT_LENGTH = 128
-MAX_SCORE_VALUE = 10
-MIN_SCORE_VALUE = 1
-MAX_EMAIL_LEN = 254
-MAX_USERNAME_LEN = 150
