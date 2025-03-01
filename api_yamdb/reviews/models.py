@@ -5,10 +5,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import (
-    CHAR_LIMIT, MAX_COMMENT_LENGTH, MAX_LENGTH_NAME, MAX_LENGTH_SLUG,
-    MAX_REVIEW_LENGTH, MAX_SCORE_VALUE, MIN_SCORE_VALUE
-)
+from .constants import (CHAR_LIMIT, MAX_COMMENT_LENGTH, MAX_LENGTH_NAME,
+                        MAX_LENGTH_SLUG, MAX_REVIEW_LENGTH, MAX_SCORE_VALUE,
+                        MIN_SCORE_VALUE)
 
 User = get_user_model()
 
@@ -27,7 +26,7 @@ class NameAndSlugAbstractModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('slug',)
+        ordering = ('slug')
 
     def __str__(self):
         return self.name
@@ -39,6 +38,7 @@ class Category(NameAndSlugAbstractModel):
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+        ordering = ('slug', 'name',)
 
 
 class Genre(NameAndSlugAbstractModel):
@@ -47,6 +47,7 @@ class Genre(NameAndSlugAbstractModel):
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+        ordering = ('slug', 'name',)
 
 
 class GenreTitle(models.Model):
@@ -88,7 +89,7 @@ class Title(models.Model):
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
-        ordering = ('name',)
+        ordering = ('name', 'year',)
 
     def clean(self):
         now_year = datetime.date.today().year

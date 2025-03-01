@@ -1,10 +1,15 @@
 from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
 from django.core.validators import RegexValidator
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
 
+from .validators import validate_username_not_me
 from reviews.models import Category, Comment, Genre, Review, Title, User
+from users.constants import MAX_EMAIL_LEN, MAX_USERNAME_LEN
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -12,28 +17,27 @@ class SignUpSerializer(serializers.Serializer):
 
     email = serializers.EmailField(
         required=True,
-        max_length=settings.MAX_EMAIL_LEN,
+        max_length=MAX_EMAIL_LEN,
     )
     username = serializers.CharField(
         required=True,
-        max_length=settings.MAX_USERNAME_LEN,
-        validators=[RegexValidator(
-            r'^[\w.@+-]+\Z',
-            message=('Имя пользователя может содержать только буквы,'
-                     'цифры и символы @/./+/-/_.'))]
+        max_length=MAX_USERNAME_LEN,
+        validators=[
+            RegexValidator(
+                r'^[\w.@+-]+\Z',
+                message=(
+                    'Имя пользователя может содержать только буквы,'
+                    'цифры и символы @/./+/-/_.'
+                )
+            ),
+            validate_username_not_me
+        ]
     )
 
     def validate(self, data):
         """Проверка данных: username и email."""
         username = data.get('username')
         email = data.get('email')
-
-        if username == 'me':
-            raise serializers.ValidationError(
-                {'username':
-                 'Использовать имя "me" в качестве username запрещено.'},
-                code=status.HTTP_400_BAD_REQUEST
-            )
 
         if User.objects.filter(username=username
                                ).exclude(email=email).exists():
@@ -51,6 +55,37 @@ class SignUpSerializer(serializers.Serializer):
 
         return data
 
+    def create(self, validated_data):
+        """Метод для создания пользователя и отправки кода подтверждения."""
+        username = validated_data['username']
+        email = validated_data['email']
+
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={'email': email}
+        )
+
+        confirmation_code = default_token_generator.make_token(user)
+        user.save()
+
+        self.send_email_token(
+            text='Код подтверждения YaMDB',
+            confirmation_code=confirmation_code,
+            email=email
+        )
+
+        return user
+
+    def send_email_token(self, text, confirmation_code, email):
+        """Отправка сообщения на почту с кодом подтверждения."""
+        send_mail(
+            subject=text,
+            message=f'Ваш код подтверждения: {confirmation_code}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=True,
+        )
+
 
 class TokenObtainSerializer(serializers.Serializer):
     """Сериализатор для обработки запросов по адресу .../auth/token."""
@@ -63,26 +98,15 @@ class TokenObtainSerializer(serializers.Serializer):
         username = data.get('username')
         confirmation_code = data.get('confirmation_code')
 
-        if not username:
-            raise serializers.ValidationError(
-                {'username': 'Это поле является обязательным.'},
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if not confirmation_code:
-            raise serializers.ValidationError(
-                {'confirmation_code': 'Это поле является обязательным.'},
-                code=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
-            user = User.objects.get(username=username)
+            user = get_object_or_404(User, username=username)
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
                 {'username': 'Пользователь с таким именем не существует.'},
                 code=status.HTTP_404_NOT_FOUND
             )
 
-        if user.confirmation_code != confirmation_code:
+        if not default_token_generator.check_token(user, confirmation_code):
             raise serializers.ValidationError(
                 {'confirmation_code': 'Неверный код подтверждения.'},
                 code=status.HTTP_400_BAD_REQUEST
@@ -98,25 +122,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role')
-        extra_kwargs = {
-            'role': {'required': False},
-            'bio': {'required': False},
-            'first_name': {'required': False},
-            'last_name': {'required': False},
-        }
-
-    def validate_username(self, value):
-        """Проверка, что username не может быть 'me'."""
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                "Имя пользователя 'me' запрещено.")
-        return value
 
 
 class UserMeSerializer(UserSerializer):
     """Сериализатор модели User для пользователя"""
 
-    role = serializers.CharField(read_only=True)
+    class Meta(UserSerializer.Meta):
+        read_only_fields = ('role',)
 
 
 class GenreSerializer(serializers.ModelSerializer):
