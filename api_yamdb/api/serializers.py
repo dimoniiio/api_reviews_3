@@ -139,6 +139,35 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
+class TitleReadSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+    # rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre',
+            'category'
+        )
+
+
+class TitleWriteSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Genre.objects.all(), many=True
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = (
+            'id', 'name', 'year', 'description', 'genre',
+            'category'
+        )
+
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализатор для произведений."""
     genre = serializers.SlugRelatedField(
@@ -156,35 +185,20 @@ class TitleSerializer(serializers.ModelSerializer):
             'category'
         )
 
-    def validate_year(self, value):
-        now_year = datetime.date.today().year
-        if value > now_year:
-            raise serializers.ValidationError(
-                'Год выпуска не может быть больше текущего года.'
-            )
-        return value
-
-    def get_rating(self, obj):
-        reviews = Review.objects.filter(title=obj)
-        if reviews.exists():
-            average_score = reviews.aggregate(Avg('score'))['score__avg']
-            return int(round(average_score, 1))
-        return None
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        if representation.get('category') is None:
-            return representation
-        genre_instances = instance.genre.all()
-        representation['genre'] = [
-            {'name': genre.name, 'slug': genre.slug} for genre in genre_instances
-        ]
-        category_instance = instance.category
-        representation['category'] = {
-            'name': category_instance.name,
-            'slug': category_instance.slug
-        }
-        return representation
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     if representation.get('category') is None:
+    #         return representation
+    #     genre_instances = instance.genre.all()
+    #     representation['genre'] = [
+    #         {'name': genre.name, 'slug': genre.slug} for genre in genre_instances
+    #     ]
+    #     category_instance = instance.category
+    #     representation['category'] = {
+    #         'name': category_instance.name,
+    #         'slug': category_instance.slug
+    #     }
+    #     return representation
 
 
 class ReviewSerializer(serializers.ModelSerializer):
