@@ -2,11 +2,10 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
-from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ErrorDetail, MethodNotAllowed
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,8 +13,9 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitleFilter
 from .pagination import CustomPageNumberPagination
-from .permissions import (IsAdmin, IsAdminOrReadOnly,
-                          IsAuthorOrModerOrAdminOrReadOnly)
+from .permissions import (
+    IsAdmin, IsAdminOrReadOnly, IsAuthorOrModerOrAdminOrReadOnly
+)
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer, SignUpSerializer,
                           TitleReadSerializer, TitleWriteSerializer,
@@ -149,9 +149,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Предсталение отзыва на произведение."""
 
     serializer_class = ReviewSerializer
-    pagination_class = CustomPageNumberPagination
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
-                          IsAuthorOrModerOrAdminOrReadOnly,)
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAuthorOrModerOrAdminOrReadOnly,)
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     @property
     def reviewed_title(self):
@@ -177,22 +177,19 @@ class CommentViewSet(viewsets.ModelViewSet):
     """Предсталение комментария к отзыву."""
 
     serializer_class = CommentSerializer
-    pagination_class = CustomPageNumberPagination
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
-                          IsAuthorOrModerOrAdminOrReadOnly,)
-
-    @property
-    def reviewed_title(self):
-        """Метод получения объекта класса произведение по id."""
-        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAuthorOrModerOrAdminOrReadOnly,)
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     @property
     def commented_review(self):
         """Метод получения объекта класса отзыва по id."""
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        if review.title == self.reviewed_title:
-            return review
-        raise Http404
+        review = get_object_or_404(
+            Review,
+            pk=self.kwargs.get('review_id'),
+            title_id=self.kwargs.get('title_id')
+        )
+        return review
 
     def get_queryset(self):
         """Метод получения всех комметариев к отзыву."""
