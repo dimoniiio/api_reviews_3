@@ -240,11 +240,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly, )
-
-    def http_method_not_allowed(self, request, *args, **kwargs):
-        if request.method == 'PUT':
-            raise MethodNotAllowed(request.method)
-        return super().http_method_not_allowed(request, *args, **kwargs)
+    http_method_names = ('get', 'post', 'patch', 'delete')
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
