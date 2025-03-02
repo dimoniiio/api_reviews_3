@@ -7,9 +7,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
 
-from users.validators import username_validator
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.constants import MAX_EMAIL_LEN, MAX_USERNAME_LEN
+from users.validators import username_validator
 
 User = get_user_model()
 
