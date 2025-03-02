@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from .constants import ADMIN, MAX_USERNAME_LEN, MODERATOR, USER
-from api.validators import username_validator
+from .validators import username_validator
 
 
 class API_User(AbstractUser):
@@ -19,7 +19,6 @@ class API_User(AbstractUser):
         unique=True,
         help_text=('Только буквы, цифры и @/./+/-/_'),
         validators=[
-            AbstractUser._meta.get_field('username').validators[0],
             username_validator
         ],
         error_messages={

@@ -31,14 +31,12 @@ class AuthViewSet(viewsets.ViewSet):
         """Обработка post-запроса по адресу .../auth/signup."""
         serializer = SignUpSerializer(data=request.data)
 
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(
-                {'email': user.email, 'username': user.username},
-                status=status.HTTP_200_OK
-            )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {'email': user.email, 'username': user.username},
+            status=status.HTTP_200_OK
+        )
 
     @action(detail=False,
             methods=['post'],
@@ -50,8 +48,7 @@ class AuthViewSet(viewsets.ViewSet):
 
         serializer = TokenObtainSerializer(data=request.data)
 
-        if not serializer.is_valid(raise_exception=True):
-            pass
+        serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data['user']
 
@@ -98,13 +95,11 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = UserMeSerializer(user)
             return Response(serializer.data)
-        else:
-            serializer = UserMeSerializer(user,
-                                          data=request.data,
-                                          partial=True)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
+
+        serializer = UserMeSerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class CategoryViewSet(CreateListDeleteViewSet):
@@ -143,7 +138,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsAuthorOrModerOrAdminOrReadOnly,)
-    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @property
     def reviewed_title(self):
@@ -158,12 +153,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
         """Метод переопределения автора и произведения у отзыва."""
         serializer.save(author=self.request.user, title=self.reviewed_title)
 
-    def update(self, request, *args, **kwargs):
-        if self.request.method == 'PUT':
-            return Response({'detail': 'Метод PUT не поддерживается.'},
-                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        return super().update(request, *args, **kwargs)
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Предсталение комментария к отзыву."""
@@ -171,7 +160,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsAuthorOrModerOrAdminOrReadOnly,)
-    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @property
     def commented_review(self):
@@ -193,9 +182,3 @@ class CommentViewSet(viewsets.ModelViewSet):
             author=self.request.user,
             review=self.commented_review
         )
-
-    def update(self, request, *args, **kwargs):
-        if self.request.method == 'PUT':
-            return Response({'detail': 'Метод PUT не поддерживается.'},
-                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        return super().update(request, *args, **kwargs)
