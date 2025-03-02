@@ -49,4 +49,4 @@ class API_User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ['username', 'email']
+        ordering = ['username',]

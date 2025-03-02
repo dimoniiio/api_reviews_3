@@ -8,6 +8,7 @@ from django.db import models
 from .constants import (CHAR_LIMIT, MAX_COMMENT_LENGTH, MAX_LENGTH_NAME,
                         MAX_LENGTH_SLUG, MAX_REVIEW_LENGTH, MAX_SCORE_VALUE,
                         MIN_SCORE_VALUE)
+from .validators import validate_year
 
 User = get_user_model()
 
@@ -81,20 +82,14 @@ class Title(models.Model):
         related_name='titles',
         verbose_name='Жанр'
     )
-    year = models.PositiveSmallIntegerField('Год произведения',)
+    year = models.SmallIntegerField('Год произведения',
+                                    validators=[validate_year],)
     description = models.TextField('Описание произведения', blank=True)
 
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         ordering = ('name', 'year',)
-
-    def clean(self):
-        now_year = datetime.date.today().year
-        if self.year > now_year:
-            raise ValidationError(
-                'Год выпуска не может быть больше текущего года.'
-            )
 
     def __str__(self):
         return self.name

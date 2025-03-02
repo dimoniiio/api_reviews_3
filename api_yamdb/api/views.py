@@ -32,9 +32,9 @@ class AuthViewSet(viewsets.ViewSet):
         serializer = SignUpSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        serializer.save()
         return Response(
-            {'email': user.email, 'username': user.username},
+            serializer.data,
             status=status.HTTP_200_OK
         )
 
