@@ -1,15 +1,17 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
-from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
 from rest_framework.relations import SlugRelatedField
 
-from .validators import validate_username_not_me
-from reviews.models import Category, Comment, Genre, Review, Title, User
+from users.validators import username_validator
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.constants import MAX_EMAIL_LEN, MAX_USERNAME_LEN
+
+User = get_user_model()
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -22,16 +24,7 @@ class SignUpSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
         max_length=MAX_USERNAME_LEN,
-        validators=[
-            RegexValidator(
-                r'^[\w.@+-]+\Z',
-                message=(
-                    'Имя пользователя может содержать только буквы,'
-                    'цифры и символы @/./+/-/_.'
-                )
-            ),
-            validate_username_not_me
-        ]
+        validators=[username_validator]
     )
 
     def validate(self, data):
@@ -66,7 +59,6 @@ class SignUpSerializer(serializers.Serializer):
         )
 
         confirmation_code = default_token_generator.make_token(user)
-        user.save()
 
         self.send_email_token(
             text='Код подтверждения YaMDB',
@@ -162,6 +154,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
 
 class TitleWriteSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
+        allow_null=False, allow_empty=False,
         slug_field='slug', queryset=Genre.objects.all(), many=True
     )
     category = serializers.SlugRelatedField(

@@ -26,7 +26,7 @@ class NameAndSlugAbstractModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('slug')
+        ordering = ('slug', 'name',)
 
     def __str__(self):
         return self.name
@@ -35,19 +35,17 @@ class NameAndSlugAbstractModel(models.Model):
 class Category(NameAndSlugAbstractModel):
     """Класс модели категория."""
 
-    class Meta:
+    class Meta(NameAndSlugAbstractModel.Meta):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
-        ordering = ('slug', 'name',)
 
 
 class Genre(NameAndSlugAbstractModel):
     """Класс модели жанр."""
 
-    class Meta:
+    class Meta(NameAndSlugAbstractModel.Meta):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
-        ordering = ('slug', 'name',)
 
 
 class GenreTitle(models.Model):
