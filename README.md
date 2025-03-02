@@ -56,13 +56,7 @@ python manage.py migrate
 ## Заполнение базы данных 
 
 ```
- python manage.py import_csv category.csv
- python manage.py import_csv genre.csv
- python manage.py import_csv users.csv
- python manage.py import_csv titles.csv
- python manage.py import_csv genre_title.csv
- python manage.py import_csv review.csv
- python manage.py import_csv comments.csv
+python manage.py import_csv
  ```
 
  
